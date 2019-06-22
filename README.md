@@ -1,3 +1,111 @@
+# betaflight-tx-lua-scripts-mod
+
+*based on release [1.3.0](https://github.com/betaflight/betaflight-tx-lua-scripts/releases/tag/1.3.0)*
+
+## Changes
+
+**+ Display external telemetry templates beside betaflight screens**
+
+**+ Configurable navigation controls, radio type independent**
+  - added user events: `longPress.page`, `release.page`
+  - added radio schemes: Taranis X-Lite, Taranis X9E
+  - added controls:
+    * ***Page back*** on long press [PAGE]
+    * ***Back to first page*** on long press [MENU]
+    * ***Close menu*** on release [MENU] button
+    * ***Quit editing*** on release [MENU] button *(not discarding changes)*
+
+**+ Minified script files, shrinked down to 75% the size of 1.3.0** (thanks to [mathiasbynens/luamin](https://github.com/mathiasbynens/luamin))
+
+## Notes
+
+I wanted to explore the potential of the popular betaflight-tx-lua-scripts a bit, as I wasn't quit satisfied with a few things. Came up with this mod and it upgraded the UX for me so well, that I decided to share it with the community. Runs nique smooth on my FrSky Taranis Q X7, but I wasn't able to do tests with any *Horus* or other model than *FrSky Taranis* so far.
+
+Install and use this modified version just the way you're used to. First time users should have a glimpse at the [install instructions](#installing).
+
+### Loading telemetry scripts
+To add, change or reorder pages, edit the `PageFiles = { ... }` table in your `SCRIPTS/BF/[platform]/[platform]pre.lua` file.
+
+As a point to start, uncomment the first line of `PageFiles` to load the example home screen `exmpl1.lua` *(except Horus)*.
+
+Order the pages to your needs (I prefer the vtx settings as my second, after the custom home screen).
+
+Prepend `-- ` to the line to hide a page (e.g. rescue.lua and gps.lua, if you don't use GPS).
+
+Use relative pathnames to refer external templates.
+If you add or edit pages, keep in mind that the radios internal memory isn't endless.
+
+### Navigation controls
+The code wich handles the user events was extracted from `ui.lua` into a table `ctrlSchema = { ... }` and placed in each `SCRIPTS/BF/[platform]/[platform]pre.lua` file.
+The assignment of radio inputs to script actions depends now on this platform specific config.
+
+For instance: if you want to have switching pages on the [DIAL WHEEL] input, change the condition of `ctrlSchema.display.prevPage` to `dial.left` and `ctrlSchema.display.nextPage` to `dial.right`.
+
+To add a radio control schema based on its platform, just overwrite the affected table fields below the schema table (see overrides for X9E in `SCRIPTS/BF/X9/x9pre.lua` for example).
+
+### Memory warning
+If you just copied the files, launched the script and a `not enough memory` warning appears, probably restarting the radio is the only thing to do here. If OpenTX still complains, try to delete all `.luac` files (compiled them with LUAC 5.3, don't know if that's a problem with some radios).
+
+### Test environment
+* OpenTX v2.2.3 on FrSky Taranis Q X7 Hardware
+* Betaflight 4.0.3 on OmnibusF4 FC
+* Companion v2.2.3 Simulator (*all FrSky, **except Horus***)
+
+> *Any feedback about testing on different hardware welcome.*
+
+### Download
+
+Please go to the [releases page](https://github.com/Matze-Jung/betaflight-tx-lua-scripts-mod/releases) to download the latest files.
+
+
+## Control schema layout
+
+| State  | Action | Condition (X7) |
+| - | - | - |
+| display | prevPage | *longPress.page* |
+| | nextPage | *release.page* |
+| | prevLine | *dial.left* |
+| | nextLine | *dial.right* |
+| | edit | *release.enter* |
+| | menu | *release.menu* |
+| | home | *longPress.menu* |
+| | exit | *release.exit* |
+| editing | decValue | *dial.left* |
+| | stepValue | *dial.right* |
+| | exit | *release.exit* or *release.enter* or *release.menu* |
+| displayMenu | prev | *dial.left* |
+| | next | *dial.right* |
+| | cnfrm | *release.enter* |
+| | exit | *release.exit* or *release.menu* |
+
+
+## User events
+
+| Action  | Name |
+| - | - |
+| press | minus |
+|   | plus |
+|   | pageDown |
+|   | pageUp |
+| longPress | enter |
+|   | menu |
+|   | page |
+| repeatPress | minus |
+|   | plus |
+| release | enter |
+|   | exit |
+|   | menu |
+|   | minus |
+|   | plus |
+|   | page |
+| dial | enter |
+|   | left |
+|   | right |
+
+
+---
+
+
 # betaflight-tx-lua-scripts
 
 ### Important:
@@ -5,10 +113,6 @@
 Some changes in the recently released OpenTX 2.2.1 cause this version to have less RAM available for lua scripts than previous versions. This often leads to problems when using the Betaflight TX lua scripts on the Taranis X9D. A discussion of these problems can be found [here](https://github.com/betaflight/betaflight-tx-lua-scripts/issues/97).
 A potential fix to increase the amount of RAM available has been identified: (https://github.com/opentx/opentx/pull/5579).
 For now, the recommendation is for users wanting to update OpenTX from 2.2.0 to 2.2.1 on a Taranis X9D (and keep using the Betaflight TX lua scripts) to hold on and monitor the situation, in the hope that OpenTX will release a version with this bugfix in the near future.
-
-### How to download the scripts
-
-Please visit the [releases page](https://github.com/betaflight/betaflight-tx-lua-scripts/releases) to download a zip file containing latest version.
 
 ## Firmware Considerations
 - Betaflight - As a best practice, it is recommended to use the most recent stable release of Betaflight to obtain the best possible results.

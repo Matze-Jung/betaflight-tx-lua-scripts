@@ -19,9 +19,9 @@ local supportedPlatforms = {
     },
     horus =
     {
-        templateHome=SCRIPT_HOME.."/HORUS/",
-        preLoad=SCRIPT_HOME.."/HORUS/horuspre.lua",
-        resolution      = lcdResolution.high
+        templateHome     = SCRIPT_HOME.."/HORUS/",
+        preLoad          = SCRIPT_HOME.."/HORUS/horuspre.lua",
+        resolution       = lcdResolution.high
     },
 }
 
@@ -41,9 +41,14 @@ local supportedRadios =
 }
 
 local ver, rad, maj, min, rev = getVersion()
+
+rad = string.gsub(rad, "-simu$", "")
+
 local radio = supportedRadios[rad]
 
-if not radio then
+if radio then
+    radio.name = rad
+else
     error("Radio not supported: "..rad)
 end
 

@@ -22,11 +22,9 @@ local saveTS = 0
 local saveTimeout = 0
 local saveRetries = 0
 local saveMaxRetries = 0
-local pageRequested = false
-local telemetryScreenActive = false
 local menuActive = false
 local lastRunTS = 0
-local killEnterBreak = 0
+local lockedInp = 0
 local scrollPixelsY = 0
 
 local Page = nil
@@ -35,6 +33,41 @@ local backgroundFill = TEXT_BGCOLOR or ERASE
 local foregroundColor = LINE_COLOR or SOLID
 
 local globalTextOptions = TEXT_COLOR or 0
+
+-- define order of ctrlSchema (no table lib included in openTX)
+local statesIndex = { 'display', 'editing', 'displayMenu' }
+local actionsIndex = {
+    { 'prevPage', 'nextPage', 'prevLine', 'nextLine', 'edit', 'menu', 'home', 'exit' },
+    { 'decValue', 'stepValue', 'exit' },
+    { 'prev', 'next', 'cnfrm', 'exit' }
+}
+
+function setState(name)
+    if pageStatus[name] ~= nil then
+        if name == 'displayMenu' then
+            -- open menu
+            menuActive = 1
+        elseif name == 'editing' then
+            -- editing
+            local field = Page.fields[currentLine]
+            local idx = field.i or currentLine
+            if not Page.values or not Page.values[idx] or not (field.ro ~= true) then
+                return
+            end
+        end
+        currentState = pageStatus[name]
+    end
+end
+
+function setLock(x) lockedInp = x end
+
+function isInpLocked(x)
+    if lockedInp == x then
+print("logging: input was locked and is released!! ", x)
+        lockedInp = 0
+        return 1
+    end
+end
 
 local function saveSettings(new)
     if Page.values then
@@ -51,7 +84,7 @@ local function saveSettings(new)
         if currentState == pageStatus.saving then
             saveRetries = saveRetries + 1
         else
-            currentState = pageStatus.saving
+            setState("saving")
             saveRetries = 0
             saveMaxRetries = protocol.saveMaxRetries or 2 -- default 2
             saveTimeout = protocol.saveTimeout or 150     -- default 1.5s
@@ -61,7 +94,7 @@ end
 
 local function invalidatePages()
     Page = nil
-    currentState = pageStatus.display
+    setState("display")
     saveTS = 0
 end
 
@@ -99,7 +132,6 @@ local function processMspReply(cmd,rx_buf)
         else
             invalidatePages()
         end
-        pageRequested = false
         return
     end
     if cmd == uiMsp.eepromWrite then
@@ -142,19 +174,33 @@ local function incMax(val, inc, base)
     return ((val + inc + base - 1) % base) + 1
 end
 
-local function incPage(inc)
+function stepPage(inc)
     currentPage = incMax(currentPage, inc, #(PageFiles))
     Page = nil
     currentLine = 1
     collectgarbage()
 end
 
-local function incLine(inc)
+function gotoPage(x)
+    if PageFiles[x] ~= nil then
+        currentPage = x
+        Page = nil
+        currentLine = 1
+        collectgarbage()
+    end
+end
+
+function stepLine(inc)
     currentLine = clipValue(currentLine + inc, 1, #(Page.fields))
 end
 
-local function incMenu(inc)
+function stepMenu(inc)
     menuActive = clipValue(menuActive + inc, 1, #(menuList))
+end
+
+function execMenu()
+    setState('display')
+    menuList[menuActive].f()
 end
 
 local function requestPage()
@@ -175,18 +221,26 @@ function drawScreenTitle(screen_title)
 end
 
 local function drawScreen()
+    if not Page or not Page.fields then return end
+
     local yMinLim = Page.yMinLimit or 0
     local yMaxLim = Page.yMaxLimit or LCD_H
-    local currentLineY = Page.fields[currentLine].y
     local screen_title = Page.title
-    drawScreenTitle("Betaflight / "..screen_title)
-    if currentLineY <= Page.fields[1].y then
-        scrollPixelsY = 0
-    elseif currentLineY - scrollPixelsY <= yMinLim then
-        scrollPixelsY = currentLineY - yMinLim
-    elseif currentLineY - scrollPixelsY >= yMaxLim then
-        scrollPixelsY = currentLineY - yMaxLim
+    local val = "---"
+
+    if Page.fields[currentLine] ~= nil then
+        local currentLineY = Page.fields[currentLine].y
+        if currentLineY <= Page.fields[1].y then
+            scrollPixelsY = 0
+        elseif currentLineY - scrollPixelsY <= yMinLim then
+            scrollPixelsY = currentLineY - yMinLim
+        elseif currentLineY - scrollPixelsY >= yMaxLim then
+            scrollPixelsY = currentLineY - yMaxLim
+        end
     end
+
+    drawScreenTitle("Betaflight / "..screen_title)
+
     for i=1,#(Page.text) do
         local f = Page.text[i]
         local textOptions = (f.to or 0) + globalTextOptions
@@ -194,7 +248,7 @@ local function drawScreen()
             lcd.drawText(f.x, f.y - scrollPixelsY, f.t, textOptions)
         end
     end
-    local val = "---"
+
     for i=1,#(Page.fields) do
         local f = Page.fields[i]
         local text_options = (f.to or 0) + globalTextOptions
@@ -245,7 +299,7 @@ local function getCurrentField()
     return Page.fields[currentLine]
 end
 
-local function incValue(inc)
+function stepValue(inc)
     local f = Page.fields[currentLine]
     local idx = f.i or currentLine
     local scale = (f.scale or 1)
@@ -294,71 +348,36 @@ function run_ui(event)
                 saveSettings()
             else
                 -- max retries reached
-                currentState = pageStatus.display
+                setState("display")
                 invalidatePages()
             end
         end
     end
     -- process send queue
     mspProcessTxQ()
-    -- navigation
-    if (event == userEvent.longPress.menu) then -- Taranis QX7 / X9
-        menuActive = 1
-        currentState = pageStatus.displayMenu
-    elseif userEvent.press.pageDown and (event == userEvent.longPress.enter) then -- Horus
-        menuActive = 1
-        killEnterBreak = 1
-        currentState = pageStatus.displayMenu
-    -- menu is currently displayed
-    elseif currentState == pageStatus.displayMenu then
-        if event == userEvent.release.exit then
-            currentState = pageStatus.display
-        elseif event == userEvent.release.plus or event == userEvent.dial.left then
-            incMenu(-1)
-        elseif event == userEvent.release.minus or event == userEvent.dial.right then
-            incMenu(1)
-        elseif event == userEvent.release.enter then
-            if killEnterBreak == 1 then
-                killEnterBreak = 0
-            else
-                currentState = pageStatus.display
-                menuList[menuActive].f()
+
+    for i=1, #(statesIndex) do
+        local st = statesIndex[i]
+        if currentState == pageStatus[st] then
+            for t, action in pairs(actionsIndex[i]) do
+                local actionTbl = ctrlSchema[st][action]
+                if actionTbl.cond ~= nil then
+                    if actionTbl.cond(event, userEvent) then
+                        if actionTbl.func ~= nil and not isInpLocked(st.."."..action) then
+                           actionTbl.func(event, userEvent)
+                        end
+                        break
+                    end
+                end
             end
-        end
-    -- normal page viewing
-    elseif currentState <= pageStatus.display then
-        if event == userEvent.press.pageUp then
-            incPage(-1)
-        elseif event == userEvent.release.menu or event == userEvent.press.pageDown then
-            incPage(1)
-        elseif event == userEvent.release.plus or event == userEvent.repeatPress.plus or event == userEvent.dial.left then
-            incLine(-1)
-        elseif event == userEvent.release.minus or event == userEvent.repeatPress.minus or event == userEvent.dial.right then
-            incLine(1)
-        elseif event == userEvent.release.enter then
-            local field = Page.fields[currentLine]
-            local idx = field.i or currentLine
-            if Page.values and Page.values[idx] and (field.ro ~= true) then
-                currentState = pageStatus.editing
-            end
-        elseif event == userEvent.release.exit then
-            return protocol.exitFunc();
-        end
-    -- editing value
-    elseif currentState == pageStatus.editing then
-        if (event == userEvent.release.exit) or (event == userEvent.release.enter) then
-            currentState = pageStatus.display
-        elseif event == userEvent.press.plus or event == userEvent.repeatPress.plus or event == userEvent.dial.right then
-            incValue(1)
-        elseif event == userEvent.press.minus or event == userEvent.repeatPress.minus or event == userEvent.dial.left then
-            incValue(-1)
         end
     end
+
     local nextPage = currentPage
     while Page == nil do
         Page = assert(loadScript(radio.templateHome .. PageFiles[currentPage]))()
         if Page.requiredVersion and apiVersion > 0 and Page.requiredVersion > apiVersion then
-            incPage(1)
+            stepPage(1)
 
             if currentPage == nextPage then
                 lcd.clear()
@@ -394,4 +413,25 @@ function run_ui(event)
     return 0
 end
 
-return run_ui
+function pre_ui(event)
+    if Page == nil then
+        Page = assert(loadScript(radio.templateHome .. PageFiles[currentPage]))()
+    end
+
+    if Page.run ~= nil and type(Page.run) == "function" then
+        if ctrlSchema.display.prevPage.cond(event, userEvent) or
+           ctrlSchema.display.nextPage.cond(event, userEvent) then
+            return run_ui(event)
+        end
+
+        -- reset locked state from home action
+        isInpLocked('display.menu')
+
+        lcd.clear()
+        return assert(Page.run)(event)
+    else
+        return run_ui(event)
+    end
+end
+
+return pre_ui
