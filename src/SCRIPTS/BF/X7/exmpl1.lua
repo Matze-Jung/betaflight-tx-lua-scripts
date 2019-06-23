@@ -1,6 +1,6 @@
 
 local function run(event)
-    -- Note: ui-functions like drawScreenTitle('your title') are also available here
+    -- Note: ui-functions like drawScreenTitle("your title") are also available here
 
     -- throttle range
     lcd.drawText(5, 5, "THR RNG ", SMLSIZE)

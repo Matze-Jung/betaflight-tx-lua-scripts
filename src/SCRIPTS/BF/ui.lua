@@ -35,19 +35,19 @@ local foregroundColor = LINE_COLOR or SOLID
 local globalTextOptions = TEXT_COLOR or 0
 
 -- define order of ctrlSchema (no table lib included in openTX)
-local statesIndex = { 'display', 'editing', 'displayMenu' }
+local statesIndex = { "display", "editing", "displayMenu" }
 local actionsIndex = {
-    { 'prevPage', 'nextPage', 'prevLine', 'nextLine', 'edit', 'menu', 'home', 'exit' },
-    { 'decValue', 'stepValue', 'exit' },
-    { 'prev', 'next', 'cnfrm', 'exit' }
+    { "prevPage", "nextPage", "prevLine", "nextLine", "edit", "menu", "home", "exit" },
+    { "decValue", "stepValue", "exit" },
+    { "prev", "next", "cnfrm", "exit" }
 }
 
 function setState(name)
     if pageStatus[name] ~= nil then
-        if name == 'displayMenu' then
+        if name == "displayMenu" then
             -- open menu
             menuActive = 1
-        elseif name == 'editing' then
+        elseif name == "editing" then
             -- editing
             local field = Page.fields[currentLine]
             local idx = field.i or currentLine
@@ -199,7 +199,7 @@ function stepMenu(inc)
 end
 
 function execMenu()
-    setState('display')
+    setState("display")
     menuList[menuActive].f()
 end
 
@@ -425,7 +425,7 @@ function pre_ui(event)
         end
 
         -- reset locked state from home action
-        isInpLocked('display.menu')
+        isInpLocked("display.menu")
 
         lcd.clear()
         return assert(Page.run)(event)

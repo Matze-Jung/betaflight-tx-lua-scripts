@@ -38,21 +38,21 @@ ctrlSchema = {
         edit = {
             cond = function(e, evs) return e == evs.release.enter end,
             func = function()
-                setState('editing')
-                setLock('editing.exit')
+                setState("editing")
+                setLock("editing.exit")
             end
         },
         menu = {
             cond = function(e, evs) return (evs.press.pageDown and e == evs.longPress.enter) or e == evs.release.menu end,
             func = function()
-                setState('displayMenu')
-                setLock('displayMenu.cnfrm')
+                setState("displayMenu")
+                setLock("displayMenu.cnfrm")
             end
         },
         home = {
             cond = function(e, evs) return e == evs.longPress.menu end,
             func = function()
-                setLock('display.menu')
+                setLock("display.menu")
                 gotoPage(1)
             end
         },
