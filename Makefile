@@ -1,2 +1,2 @@
 all:
-	bin/build.sh
+	bin/build.sh min
