@@ -12,8 +12,8 @@ fi
 if [ -d tmp ]; then
     rm -dfR tmp
 fi
+mkdir -p tmp
 
-mkdir -p tmp/SCRIPTS/BF
 echo
 luac -v
 
@@ -22,27 +22,21 @@ if [[ $MINIFY == "min" ]]; then
     echo luamin $(npm view luamin version)"  "Copyright Mathias Bynens [https://github.com/mathiasbynens/luamin]
 fi
 
-echo
-echo "duplicating ..."
-## backup minify excludes
-EXCLUDE=(`find src/SCRIPTS/BF/* -name *pre.lua -type f`);
-for x in ${EXCLUDE[@]};
-do
-    mkdir -p $(dirname ${x/src/tmp})
-    cp -fR $x ${x/src/tmp}
-done
-cp -fR src/SCRIPTS/BF/X7/exmpl1.lua tmp/SCRIPTS/BF/X7/exmpl1.lua
+if [ -f .minignore ]; then
+    EXCLUDE=(`find src/* $(<.minignore)`);
+fi
 
-MANIFEST=(`find src/* -name *.lua -type f`);
+MANIFEST=(`find src/* $(<.buildfiles)`);
 
 if [ ${#MANIFEST[@]} -eq 0 ]; then
-    echo -e "\e[1m\e[39m[\e[31mTEST FAILED\e[39m] \e[21mNo scripts could be found\e[21m!"
+    echo -e "\e[1m\e[39m[\e[31mTEST FAILED\e[39m] \e[21mNo scripts could be found\e[21m! \e[0m"
     exit 1
 fi
 
 rm -f tmp/tmperr
 touch tmp/tmperr
 
+echo
 echo "building ..."
 
 for file in ${MANIFEST[@]};
@@ -57,10 +51,14 @@ do
 
     mkdir -p ${OBJ_PATH}
 
+
     if [[ $MINIFY == "min" ]]; then
-        echo -n " minify ..."
-        node node_modules/luamin/bin/luamin -f "$file" > "${OBJ_PATH}${OBJ_LUA}"
-        cp -f "${file/src/tmp}" "${OBJ_PATH}${OBJ_LUA}" >/dev/null >tmp/null 2>tmp/null
+        if [[ $EXCLUDE && ($(printf "_[%s]_" "${EXCLUDE[@]}") =~ .*_\[$file\]_.*) ]]; then
+            cp -f "$file" "${OBJ_PATH}${OBJ_LUA}"
+        else
+            echo -n " minify ..."
+            node node_modules/luamin/bin/luamin -f "$file" > "${OBJ_PATH}${OBJ_LUA}"
+        fi
     else
         cp -f "$file" "${OBJ_PATH}${OBJ_LUA}"
     fi
@@ -81,19 +79,21 @@ do
         echo -ne " \e[1m\e[39m[\e[32mok\e[39m]\e[1m\e[0m\e[0m"
     fi
 done
-echo
 
 LAST_FAILURES=$(<tmp/tmperr)
 
 rm -dfR tmp
 
+echo
 if [[ $LAST_FAILURES == '' ]]; then
-    echo
-    echo "copying attachments..."
-    cp -fvR src/SOUNDS obj/SOUNDS
+    if [ -f bin/attachments.sh ]; then
+        echo
+        echo "copying attachments..."
+        bash bin/attachments.sh
+    fi
 
     echo
-    echo -e "\e[1m\e[39m[\e[32mSUCCESSFUL\e[39m] \e[21mAll lua files built successfully!\e[21m\e[1m\e[0m\e[0m"
+    echo -e "\e[1m\e[39m[\e[32mSUCCESSFUL\e[39m] \e[21mAll files built successfully!\e[21m\e[1m\e[0m\e[0m"
 else
     echo "$LAST_FAILURES"$'\r' >> ".builderr"
     echo
