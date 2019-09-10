@@ -2,37 +2,49 @@
 *based on release [1.3.0](https://github.com/betaflight/betaflight-tx-lua-scripts/releases/tag/1.3.0)*
 
 ## Changes
-**+ Display external telemetry templates beside betaflight screens**
+**+ Display telemetry screens inside betaflight**
 
 **+ Configurable navigation controls, radio type independent**
   - added user events: `longPress.page`, `release.page`
   - added radio schemes: Taranis X-Lite, Taranis X9E
   - added controls:
-    * ***Page back*** on long press [PAGE]
-    * ***Back to first page*** on long press [MENU]
+    * ***Page back*\*** on long press [PAGE]
+    * ***Back to first page*\*** on long press [MENU]
     * ***Close menu*** on release [MENU] button
-    * ***Quit editing*** on release [MENU] button *(not discarding changes)*
+    * ***Quit editing*** on release [MENU] button
 
-**+ Minified script files, shrinked down to 75% the size of 1.3.0** (thanks to [mathiasbynens/luamin](https://github.com/mathiasbynens/luamin))
+**+ Minified script files** (thanks to [mathiasbynens/luamin](https://github.com/mathiasbynens/luamin))
 
-## Notes
-Wanted to explore the potential of the popular betaflight-tx-lua-scripts a bit, as I wasn't quit satisfied with a few things. Came up with this mod and it upgraded the UX for me so well, that I decided to share it with the community. Runs nique smooth on my FrSky Taranis Q X7, but I wasn't able to do tests with any other models than FrSky so far.
+##  
 
-Install and use this modified version just the way you're used to. First time users should have a glimpse at the [install instructions](#installing).
+![alt text](img/navigation.gif "more convenient navigation")
+
+> \**You can not access other telemetry screen slots, cause its part of design. The input [PAGE] is used for stepping pages, similar to the OpenTX system menu.
+Apply [a patch](https://github.com/Matze-Jung/betaflight-tx-lua-scripts-mod/tree/master/patches) if you want to have the original input mapping restored.*
+
+
+##  
+
+OpenTX provides only four telemetry screen slots and to me, the navigation doesn't seem to be very familiar. Sacrifice switches to trigger screens ain't an satisfying option either. The betaflight script has the capability of navigating screens already and is compatible to a range of radios. So why not use that?
+
+With this mod the limit number of telemetry screens depend only on the system memory. Just list them in your platforms config file. You don't even have to display the betaflight screens if not needed.
+
+Install this modified version just the way you're used to. First time users should have a glimpse at the [install instructions](#installing).
 
 ### Loading telemetry scripts
 To add, change or reorder pages, edit the `PageFiles = { ... }` table in your `SCRIPTS/BF/[platform]/[platform]pre.lua` file.
 
-As a point to start, uncomment the first line of `PageFiles` to load the example home screen `exmpl1.lua` *(except Horus)*.
+Uncomment the first item of `PageFiles` to load the example home screen `../../TELEMETRY/exmpl1.lua` or insert your own scripts.
+> *If you have TBS Crossfire, try* `../../../CROSSFIRE/crossfire.lua`
 
-Order the pages to your needs (I prefer the vtx settings as my second, after the custom home screen).
+Order the pages to your needs. I prefer the vtx settings as last, one before home screen. Then long press [MENU], long press [PAGE] is a quick and rememberable action to access vtx settings.
 
 Prepend `-- ` to the line to hide a page (e.g. rescue.lua and gps.lua, if you don't use GPS).
 
-Use relative pathnames to refer external templates.
+Use relative pathnames to refer external scripts.
 If you add or edit pages, keep in mind that the radios internal memory isn't endless.
 
-> *If you have TBS Crossfire, you can try* `../../../CROSSFIRE/crossfire.lua`*. The Page seems to load, but tell me if it's actually working.*
+> *To layout and create custom telemetry screens, I would recommend a grid-system like [opentx-lua-widgets](https://github.com/Matze-Jung/opentx-lua-widgets).*
 
 ### Mapping navigation controls
 The code wich handles the user events was abstracted from `ui.lua` into a table `ctrlSchema = { ... }` and placed in each `SCRIPTS/BF/[platform]/[platform]pre.lua` file.
@@ -42,14 +54,14 @@ For instance: if you want to have switching pages on the [DIAL WHEEL] input, cha
 
 To add a transmitter control schema based on its platform, just overwrite the affected table fields below the schema table (see overrides for X9E in `SCRIPTS/BF/X9/x9pre.lua` [for example](https://github.com/Matze-Jung/betaflight-tx-lua-scripts-mod/blob/7c4463aec29757763e8eb7aea49905e677711ef7/src/SCRIPTS/BF/X9/x9pre.lua#L101)).
 
-This concept should have the potential to implement new coming radios much easier and be handled separately from the core ui code.
+This concept should have the potential to implement new coming radios much easier and be maintenanced separately from the core ui code.
 
 ### Memory warning
-If you just copied the files, launched the script and a `not enough memory` warning appears, probably restarting the radio is the only thing to do here. If OpenTX still complains, try to delete all `.luac` files (compiled with LUAC 5.3.5, don't know if that's a problem with some devices).
+If you just copied the files, launched the script and a `not enough memory` warning appears, probably restarting the radio is the only thing to do here. If OpenTX still complains, try to delete all `.luac` files and make shure that you've did build OpenTX with the luac-option checked.
 
 ## Test environment
-* OpenTX v2.2.3 on Taranis Q X7, Betaflight 4.0.3 on OmnibusF4, R-XSR
-* Companion Sim v2.2.3 & 2.3.0N34 (*FrSky radios only*)
+* [OpenTX v2.2.4](https://github.com/opentx/opentx) on Taranis Q X7, [Betaflight 4.0.5](https://github.com/betaflight/betaflight) on OmnibusF4 w/ R-XSR
+* [Companion Sim v2.2.4](https://www.open-tx.org/) (*FrSky platforms only*)
 
 > *Any [feedback](https://github.com/Matze-Jung/betaflight-tx-lua-scripts-mod/issues/new/choose) about testing on different hardware welcome.*
 
@@ -63,24 +75,24 @@ Please go to the [releases page](https://github.com/Matze-Jung/betaflight-tx-lua
 - Compiled/minified files will be created at the `obj` folder. Copy the files to your transmitter as instructed in the [Installing section](#installing) below as if you unzipped from a downloaded file.
 
 ## Control schema layout
-| State  | Action | Condition (X7) |
-| - | - | - |
-| display | prevPage | *longPress.page* |
-| | nextPage | *release.page* |
-| | prevLine | *dial.left* |
-| | nextLine | *dial.right* |
-| | edit | *release.enter* |
-| | menu | *release.menu* |
-| | home | *longPress.menu* |
-| | exit | *release.exit* |
-| editing | decValue | *dial.left* |
-| | stepValue | *dial.right* |
-| | exit | *release.exit* or *release.enter* or *release.menu* |
-| displayMenu | prev | *dial.left* |
-| | next | *dial.right* |
-| | cnfrm | *release.enter* |
-| | exit | *release.exit* or *release.menu* |
-> *Action `func()` is fired when condition is true and in application state.*
+| State  | Action | Event *(X7)* | Event *(X9)* |
+| - | - | - | - |
+| display | prevPage | *longPress.page* | *longPress.page* |
+| | nextPage | *release.page* | *release.page* |
+| | prevLine | *dial.left* | *release.plus* |
+| | nextLine | *dial.right* | *release.minus* |
+| | edit | *release.enter* | *release.enter* |
+| | menu | *release.menu* | *release.menu* |
+| | home | *longPress.menu* | *longPress.menu* |
+| | exit | *release.exit* | *release.exit* |
+| editing | decValue | *dial.left* | *release.plus* |
+| | stepValue | *dial.right* | *release.minus* |
+| | exit | *release.exit* or *release.enter* or *release.menu* | *release.exit* or *release.enter* or *release.menu* |
+| displayMenu | prev | *dial.left* | *release.plus* |
+| | next | *dial.right* | *release.minus* |
+| | cnfrm | *release.enter* | *release.enter* |
+| | exit | *release.exit* or *release.menu* | *release.exit* or *release.menu* |
+> *The control schema is located in the `SCRIPTS/BF/[platform]/[platform]pre.lua` file.*
 
 ## User events
 | Action  | Name |
@@ -103,6 +115,11 @@ Please go to the [releases page](https://github.com/Matze-Jung/betaflight-tx-lua
 | dial | enter |
 |   | left |
 |   | right |
+
+## Resources
+* [Manual for OpenTX 2.2](https://opentx.gitbooks.io/manual-for-opentx-2-2)
+* [OpenTX 2.2 Lua Reference Guide](https://opentx.gitbooks.io/opentx-2-2-lua-reference-guide/)
+* [OpenTX Taranis Manual](https://opentx.gitbooks.io/opentx-taranis-manual)
 
 ---
 

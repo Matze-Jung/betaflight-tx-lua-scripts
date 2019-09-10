@@ -1,0 +1,35 @@
+diff --git "a/src/SCRIPTS/BF/X9/x9pre.lua" "b/src/SCRIPTS/BF/X9/x9pre.lua"
+index b8a6867..a1074e1 100644
+--- "a/src/SCRIPTS/BF/X9/x9pre.lua"
++++ "b/src/SCRIPTS/BF/X9/x9pre.lua"
+@@ -20,11 +20,11 @@ NoTelem = { 70, 55, "No Telemetry", BLINK }
+ ctrlSchema = {
+     display = {
+         prevPage = {
+-            cond = function(e, evs) return e == evs.longPress.page end,
++            cond = function(e, evs) return false end,
+             func = function() stepPage(-1) end
+         },
+         nextPage = {
+-            cond = function(e, evs) return e == evs.release.page end,
++            cond = function(e, evs) return e == evs.release.menu end,
+             func = function() stepPage(1) end
+         },
+         prevLine = {
+@@ -43,14 +43,14 @@ ctrlSchema = {
+             end
+         },
+         menu = {
+-            cond = function(e, evs) return e == evs.release.menu end,
++            cond = function(e, evs) return e == evs.longPress.menu end,
+             func = function()
+                 setState("displayMenu")
+                 setLock("displayMenu.exit")
+             end
+         },
+         home = {
+-            cond = function(e, evs) return e == evs.longPress.menu end,
++            cond = function(e, evs) return false end,
+             func = function()
+                 setLock("display.menu")
+                 gotoPage(1)

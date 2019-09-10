@@ -1,0 +1,43 @@
+diff --git "a/src/SCRIPTS/BF/X7/x7pre.lua" "b/src/SCRIPTS/BF/X7/x7pre.lua"
+index 1db2f35..1a78e6a 100644
+--- "a/src/SCRIPTS/BF/X7/x7pre.lua"
++++ "b/src/SCRIPTS/BF/X7/x7pre.lua"
+@@ -19,11 +19,11 @@ NoTelem = { 32, 55, "No Telemetry!", BLINK }
+ ctrlSchema = {
+     display = {
+         prevPage = {
+-            cond = function(e, evs) return e == evs.longPress.page end,
++            cond = function(e, evs) return false end,
+             func = function() stepPage(-1) end
+         },
+         nextPage = {
+-            cond = function(e, evs) return e == evs.release.page end,
++            cond = function(e, evs) return e == evs.release.menu end,
+             func = function() stepPage(1) end
+         },
+         prevLine = {
+@@ -42,14 +42,14 @@ ctrlSchema = {
+             end
+         },
+         menu = {
+-            cond = function(e, evs) return e == evs.release.menu end,
++            cond = function(e, evs) return e == evs.longPress.menu end,
+             func = function()
+                 setState("displayMenu")
+                 setLock("displayMenu.exit")
+             end
+         },
+         home = {
+-            cond = function(e, evs) return e == evs.longPress.menu end,
++            cond = function(e, evs) return false end,
+             func = function()
+                 setLock("display.menu")
+                 gotoPage(1)
+@@ -101,7 +101,4 @@ ctrlSchema = {
+ if string.match(radio.name, "^xlite") then
+     ctrlSchema.display.prevPage.cond = function(e, evs) return e == evs.press.pageUp end
+     ctrlSchema.display.nextPage.cond = function(e, evs) return e == evs.release.menu end
+-    ctrlSchema.display.menu.cond = function(e, evs) return e == 32 end
+-    ctrlSchema.display.home.cond = function(e, evs) return e == 128 end
+-    ctrlSchema.displayMenu.exit.cond = function(e, evs) return e == 32 end
+ end
