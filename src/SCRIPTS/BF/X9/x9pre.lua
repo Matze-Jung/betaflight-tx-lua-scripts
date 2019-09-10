@@ -1,6 +1,6 @@
 PageFiles =
 {
---    "../X7/exmpl1.lua",
+--    "../../TELEMETRY/exmpl1.lua",
     "pids1.lua",
     "pids2.lua",
     "rates.lua",
