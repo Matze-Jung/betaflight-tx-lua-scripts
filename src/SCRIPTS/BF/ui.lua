@@ -43,7 +43,7 @@ local actionsIndex = {
 }
 
 function setState(name)
-    if pageStatus[name] ~= nil then
+    if pageStatus[name] then
         if name == "displayMenu" then
             -- open menu
             menuActive = 1
@@ -63,7 +63,6 @@ function setLock(x) lockedInp = x end
 
 function isInpLocked(x)
     if lockedInp == x then
-print("logging: input was locked and is released!! ", x)
         lockedInp = 0
         return 1
     end
@@ -182,7 +181,7 @@ function stepPage(inc)
 end
 
 function gotoPage(x)
-    if PageFiles[x] ~= nil then
+    if PageFiles[x] then
         currentPage = x
         Page = nil
         currentLine = 1
@@ -228,7 +227,7 @@ local function drawScreen()
     local screen_title = Page.title
     local val = "---"
 
-    if Page.fields[currentLine] ~= nil then
+    if Page.fields[currentLine] then
         local currentLineY = Page.fields[currentLine].y
         if currentLineY <= Page.fields[1].y then
             scrollPixelsY = 0
@@ -361,9 +360,9 @@ function run_ui(event)
         if currentState == pageStatus[st] then
             for t, action in pairs(actionsIndex[i]) do
                 local actionTbl = ctrlSchema[st][action]
-                if actionTbl.cond ~= nil then
+                if actionTbl.cond then
                     if actionTbl.cond(event, userEvent) then
-                        if actionTbl.func ~= nil and not isInpLocked(st.."."..action) then
+                        if actionTbl.func and not isInpLocked(st.."."..action) then
                            actionTbl.func(event, userEvent)
                         end
                         break
@@ -418,9 +417,15 @@ function pre_ui(event)
         Page = assert(loadScript(radio.templateHome .. PageFiles[currentPage]))()
     end
 
-    if Page.run ~= nil and type(Page.run) == "function" then
+    if not Page.didInit and Page.init then
+        Page.init()
+        Page.didInit = 1
+    end
+
+    if Page.run then
         if ctrlSchema.display.prevPage.cond(event, userEvent) or
-           ctrlSchema.display.nextPage.cond(event, userEvent) then
+           ctrlSchema.display.nextPage.cond(event, userEvent) or
+           ctrlSchema.display.home.cond(event, userEvent) then
             return run_ui(event)
         end
 
@@ -428,7 +433,9 @@ function pre_ui(event)
         isInpLocked("display.menu")
 
         lcd.clear()
-        return assert(Page.run)(event)
+        collectgarbage()
+
+        return Page.run(event)
     else
         return run_ui(event)
     end
