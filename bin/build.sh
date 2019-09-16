@@ -12,7 +12,7 @@ fi
 if [ -d tmp ]; then
     rm -dfR tmp
 fi
-mkdir -p tmp
+mkdir tmp
 
 echo
 luac -v

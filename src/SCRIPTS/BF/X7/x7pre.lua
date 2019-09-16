@@ -105,3 +105,11 @@ if string.match(radio.name, "^xlite") then
     ctrlSchema.display.home.cond = function(e, evs) return e == 128 end
     ctrlSchema.displayMenu.exit.cond = function(e, evs) return e == 32 end
 end
+
+-- Jumper T12
+if string.match(radio.name, "t12") then
+    ctrlSchema.display.prevPage.cond = function(e, evs) return e == evs.release.menu end
+    ctrlSchema.display.nextPage.cond = function(e, evs) return e == evs.press.pageUp end
+    ctrlSchema.display.menu.cond = function(e, evs) return e == 67 end
+    ctrlSchema.display.home.cond = function(e, evs) return e == 66 end
+end
