@@ -1,1 +1,1 @@
--name *.lua
+-name *.lua ! -name debug*.*
