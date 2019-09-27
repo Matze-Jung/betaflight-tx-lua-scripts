@@ -1,4 +1,4 @@
-# betaflight-tx-lua-scripts-mod
+# betaflight-tx-lua-scripts-mod [![Build Status](https://travis-ci.org/Matze-Jung/betaflight-tx-lua-scripts.svg?branch=master)](https://travis-ci.org/Matze-Jung/betaflight-tx-lua-scripts)
 *based on release [1.3.0](https://github.com/betaflight/betaflight-tx-lua-scripts/releases/tag/1.3.0)*
 
 ## Changes
@@ -17,7 +17,7 @@
 
 ##  
 
-![alt text](img/navigation.gif "more convenient navigation")
+[![](img/navigation.gif "more convenient navigation via [PAGE] key")](https://github.com/Matze-Jung/betaflight-tx-lua-scripts/blob/master/README.md)
 
 > \**You can not access other telemetry screen slots, cause its part of design. The input [PAGE] is used for stepping pages, similar to the OpenTX system menu.
 Apply [a patch](https://github.com/Matze-Jung/betaflight-tx-lua-scripts-mod/tree/master/patches) if you want to have the original input mapping restored.*
@@ -52,7 +52,7 @@ The assignment of radio inputs to script actions depends now on this platform sp
 
 For instance: if you want to have switching pages on the [DIAL WHEEL] input, change the condition of `ctrlSchema.display.prevPage` to `dial.left` and `ctrlSchema.display.nextPage` to `dial.right`.
 
-To add a transmitter control schema based on its platform, just overwrite the affected table fields below the schema table (see overrides for X9E in `SCRIPTS/BF/X9/x9pre.lua` [for example](https://github.com/Matze-Jung/betaflight-tx-lua-scripts-mod/blob/7c4463aec29757763e8eb7aea49905e677711ef7/src/SCRIPTS/BF/X9/x9pre.lua#L101)).
+To add a transmitter control schema based on its platform, just overwrite the affected table fields below the schema table (see overrides for X9E in `SCRIPTS/BF/X9/x9pre.lua` [for example](https://github.com/Matze-Jung/betaflight-tx-lua-scripts/blob/master/src/SCRIPTS/BF/X9/x9pre.lua#L101)).
 
 This concept should have the potential to implement new coming radios much easier and be maintenanced separately from the core ui code.
 
